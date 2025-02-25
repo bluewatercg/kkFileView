@@ -39,7 +39,8 @@ RUN apt-get update && \
 #     mkfontscale && \
 #     mkfontdir && \
 #     fc-cache -fv
-
+find / -name "file-preview-4.4.0.jar" 2>/dev/null
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
 # 复制编译好的 jar
 COPY --from=builder /app/target/file-preview-4.4.0.jar /app/kkFileView.jar
 
