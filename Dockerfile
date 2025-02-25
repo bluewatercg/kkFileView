@@ -11,10 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 # 安装依赖
-RUN sed -i 's@http://.*archive.ubuntu.com@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources && \
-    sed -i 's@http://security.ubuntu.com@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources && \
-    sed -i 's@http://ports.ubuntu.com@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         openjdk-8-jre \
         tzdata \
