@@ -32,7 +32,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# # 复制中文字体（可选）
+# # 复制中文字体（可选） 
 # COPY fonts/* /usr/share/fonts/chinese/
 # RUN mkdir -p /usr/share/fonts/chinese && \
 #     cd /usr/share/fonts/chinese && \
