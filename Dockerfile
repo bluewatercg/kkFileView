@@ -32,13 +32,13 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 复制中文字体（可选）
-COPY fonts/* /usr/share/fonts/chinese/
-RUN mkdir -p /usr/share/fonts/chinese && \
-    cd /usr/share/fonts/chinese && \
-    mkfontscale && \
-    mkfontdir && \
-    fc-cache -fv
+# # 复制中文字体（可选）
+# COPY fonts/* /usr/share/fonts/chinese/
+# RUN mkdir -p /usr/share/fonts/chinese && \
+#     cd /usr/share/fonts/chinese && \
+#     mkfontscale && \
+#     mkfontdir && \
+#     fc-cache -fv
 
 # 复制编译好的 jar
 COPY --from=builder /app/target/file-preview-4.4.0.jar /app/kkFileView.jar
