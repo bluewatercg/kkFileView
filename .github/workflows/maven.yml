@@ -1,60 +1,24 @@
-# 构建阶段：编译 KKFileView 4.4.0
-FROM maven:3.8.6-openjdk-8 AS builder
-WORKDIR /app
-RUN git clone https://github.com/kekingcn/kkFileView.git . && \
-    git checkout v4.4.0 && \
-    mvn clean package -DskipTests
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-# 运行阶段：创建最终镜像 
-FROM ubuntu:24.04
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /app
+name: Java CI with Maven
 
-# 替换为阿里云源并安装依赖
-RUN sed -i 's@http://.*archive.ubuntu.com@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources && \
-    sed -i 's@http://security.ubuntu.com@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources && \
-    sed -i 's@http://ports.ubuntu.com@https://mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        openjdk-8-jre \
-        tzdata \
-        locales \
-        xfonts-utils \
-        fontconfig \
-        libreoffice-nogui \
-        ttf-mscorefonts-installer \
-        ttf-wqy-microhei \
-        ttf-wqy-zenhei \
-        xfonts-wqy && \
-    # 设置时区为上海
-    echo 'Asia/Shanghai' > /etc/timezone && \
-    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    dpkg-reconfigure -f noninteractive tzdata && \
-    # 设置中文环境
-    localedef -i zh_CN -c -f UTF-8 -A /usr/share/locale/locale.alias zh_CN.UTF-8 && \
-    locale-gen zh_CN.UTF-8 && \
-    # 清理
-    apt-get autoremove -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
-# 添加中文字体（需本地提供 fonts 目录）
-COPY fonts/* /usr/share/fonts/chinese/
-RUN mkdir -p /usr/share/fonts/chinese && \
-    cd /usr/share/fonts/chinese && \
-    mkfontscale && \
-    mkfontdir && \
-    fc-cache -fv
-
-# 从构建阶段复制编译好的 jar
-COPY --from=builder /app/target/file-preview-4.4.0.jar /app/kkFileView.jar
-
-# 设置环境变量
-ENV LANG=zh_CN.UTF-8 \
-    LC_ALL=zh_CN.UTF-8
-
-# 暴露端口
-EXPOSE 8012
-
-# 启动命令
-CMD ["java", "-Xms512m", "-Xmx2048m", "-jar", "/app/kkFileView.jar"]
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 8
+      uses: actions/setup-java@v2
+      with:
+        java-version: '8'
+        distribution: 'adopt'
+        cache: maven
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
