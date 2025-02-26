@@ -1,28 +1,54 @@
-FROM ubuntu:24.04
+# 构建阶段：编译 KKFileView 4.4.0
+FROM maven:3.8.6-openjdk-8 AS builder
+WORKDIR /app
+RUN git clone https://github.com/kekingcn/kkFileView.git . && \
+    git checkout v4.4.0 && \
+    mvn clean package -DskipTests
 
-RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources &&\
-    sed -i 's@//security.ubuntu.com@//mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources &&\
-    sed -i 's@//ports.ubuntu.com@//mirrors.aliyun.com@g' /etc/apt/sources.list.d/ubuntu.sources &&\
-	apt-get update &&\
-    export DEBIAN_FRONTEND=noninteractive &&\
-	apt-get install -y --no-install-recommends openjdk-8-jre tzdata locales xfonts-utils fontconfig libreoffice-nogui &&\
-    echo 'Asia/Shanghai' > /etc/timezone &&\
-    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
-    localedef -i zh_CN -c -f UTF-8 -A /usr/share/locale/locale.alias zh_CN.UTF-8 &&\
-    locale-gen zh_CN.UTF-8 &&\
-    apt-get install -y --no-install-recommends ttf-mscorefonts-installer &&\
-    apt-get install -y --no-install-recommends ttf-wqy-microhei ttf-wqy-zenhei xfonts-wqy &&\
-	apt-get autoremove -y &&\
-    apt-get clean &&\
+# 运行阶段
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
+
+# 安装依赖
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        openjdk-8-jre \
+        tzdata \
+        locales \
+        xfonts-utils \
+        fontconfig \
+        libreoffice-nogui \
+        ttf-mscorefonts-installer \
+        ttf-wqy-microhei \
+        ttf-wqy-zenhei \
+        xfonts-wqy && \
+    echo 'Asia/Shanghai' > /etc/timezone && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata && \
+    localedef -i zh_CN -c -f UTF-8 -A /usr/share/locale/locale.alias zh_CN.UTF-8 && \
+    locale-gen zh_CN.UTF-8 && \
+    apt-get autoremove -y && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 内置一些常用的中文字体，避免普遍性乱码
-ADD fonts/* /usr/share/fonts/chinese/
-
-RUN cd /usr/share/fonts/chinese &&\
-    # 安装字体
-    mkfontscale &&\
-    mkfontdir &&\
+# # 复制中文字体（可选）
+COPY fonts/* /usr/share/fonts/chinese/
+RUN mkdir -p /usr/share/fonts/chinese && \
+    cd /usr/share/fonts/chinese && \
+    mkfontscale && \
+    mkfontdir && \
     fc-cache -fv
 
-ENV LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
+# 复制编译好的 jar
+COPY --from=builder /app/server/target/kkFileView-4.4.0.jar /app/kkFileView.jar
+
+# 设置环境变量
+ENV LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8
+
+# 暴露端口
+EXPOSE 8012
+
+# 启动命令
+CMD ["java", "-Xms512m", "-Xmx2048m", "-jar", "/app/kkFileView.jar"]
