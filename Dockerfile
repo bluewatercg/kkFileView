@@ -32,16 +32,16 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# # 复制中文字体（可选） 
+# # 复制中文字体（可选）
 # COPY fonts/* /usr/share/fonts/chinese/
 # RUN mkdir -p /usr/share/fonts/chinese && \
 #     cd /usr/share/fonts/chinese && \
 #     mkfontscale && \
 #     mkfontdir && \
 #     fc-cache -fv
-RUN find / -name "file-preview-4.4.0.jar" 2>/dev/null​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+
 # 复制编译好的 jar
-COPY --from=builder /app/target/file-preview-4.4.0.jar /app/kkFileView.jar
+COPY --from=builder /app/server/target/kkFileView-4.4.0.jar /app/kkFileView.jar
 
 # 设置环境变量
 ENV LANG=zh_CN.UTF-8 \
